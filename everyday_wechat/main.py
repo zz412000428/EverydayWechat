@@ -6,19 +6,17 @@
 """
 import os
 import time
-import json
 from apscheduler.schedulers.blocking import BlockingScheduler
 import itchat
 import random
 from itchat.content import *
-from main.common import (
-    get_yaml
-)
-from main.utils import (
+from everyday_wechat.utils.common import get_yaml
+from everyday_wechat.utils.data_collection import (
     get_bot_info,
     get_weather_info,
     get_dictum_info,
     get_diff_time,
+    get_xzw_info
 )
 
 reply_userNames = []
@@ -38,7 +36,7 @@ def run():
     set_system_notice('登录成功')
     if conf.get('is_auto_relay'):
         print('已开启图灵自动回复...')
-    init_alarm()  # 初始化定时任务
+
 
 
 def is_online(auto_login=False):
@@ -73,10 +71,10 @@ def is_online(auto_login=False):
             # 命令行显示登录二维码。
             itchat.auto_login(enableCmdQR=2, hotReload=hotReload, loginCallback=loginCallback,
                               exitCallback=exitCallback)
-            itchat.run(blockThread=False)
+            itchat.run(blockThread=True)
         else:
             itchat.auto_login(hotReload=hotReload, loginCallback=loginCallback, exitCallback=exitCallback)
-            itchat.run(blockThread=False)
+            itchat.run(blockThread=True)
         if _online():
             print('登录成功')
             return True
@@ -101,7 +99,7 @@ def init_wechat():
         else:
             print('自动回复中的好友昵称『{}』有误。'.format(name))
     # print(reply_userNames)
-
+    init_alarm()  # 初始化定时任务
 
 def init_alarm():
     """ 初始化定时提醒 """
@@ -130,11 +128,11 @@ def init_alarm():
     # 定时任务
     scheduler = BlockingScheduler()
     # 每天9：30左右给女朋友发送每日一句
-    scheduler.add_job(send_alarm_msg, 'cron', hour=hour,
-                      minute=minute, misfire_grace_time=15 * 60)
+    # scheduler.add_job(send_alarm_msg, 'cron', hour=hour,
+    #                   minute=minute, misfire_grace_time=15 * 60)
 
     # 每隔 30 秒发送一条数据用于测试。
-    # scheduler.add_job(send_alarm_msg, 'interval', seconds=30)
+    scheduler.add_job(send_alarm_msg, 'interval', seconds=30)
 
     print('已开启定时发送提醒功能...')
     scheduler.start()
@@ -144,6 +142,8 @@ def init_alarm():
 def text_reply(msg):
     """ 监听用户消息，用于自动回复 """
     try:
+        if not get_yaml().get('is_auto_relay'):
+            return
         # print(json.dumps(msg, ensure_ascii=False))
         # print(reply_userNames)
         # 获取发送者的用户id
@@ -175,7 +175,9 @@ def send_alarm_msg():
         weather = get_weather_info(gf.get('city_name'))
         diff_time = get_diff_time(gf.get('start_date'))
         sweet_words = gf.get('sweet_words')
-        send_msg = '\n'.join(x for x in [weather, dictum, diff_time, sweet_words] if x)
+        horoscope = get_xzw_info(gf.get("birthday"))
+
+        send_msg = '\n'.join(x for x in [weather, dictum, diff_time, sweet_words, horoscope] if x)
         print(send_msg)
 
         if not send_msg or not is_online(): continue
@@ -249,4 +251,3 @@ def get_friend(wechat_name, update=False):
 if __name__ == '__main__':
     run()
     # send_alarm_msg()
-    pass

@@ -5,7 +5,7 @@
 """
 
 import requests
-from main.common import (
+from everyday_wechat.utils.common import (
     is_json
 )
 
@@ -24,10 +24,7 @@ def get_acib_info():
             return '{}{}'.format(content, note)
 
         print('没有获取到格言数据。')
-        return None
     except requests.exceptions.RequestException as exception:
         print(exception)
-        return None
-    return None
 
 get_one_words = get_acib_info
