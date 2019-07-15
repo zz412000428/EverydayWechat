@@ -5,13 +5,15 @@
 import requests
 
 from everyday_wechat.utils.common import (
-    get_yaml,
     is_json,
     md5_encode,
 )
 
+from everyday_wechat.utils import config
+
 # 一个AI错误集合
-TULING_ERROR_CODE_LIST = ['501', '502', '503', '504', '507', '510']
+TULING_ERROR_CODE_LIST = ('501', '502', '503', '504', '507', '510')
+
 
 def get_yigeai(text, userid):
     """
@@ -21,14 +23,16 @@ def get_yigeai(text, userid):
     :userid:str,机器唯一标识
     :return:str
     """
-    conf = get_yaml()
-    token = conf['yigeai_conf']['client_token']
-    if not token:
-        print('错误 .一个「AI」token 为空')
-        return None
-    session_id = md5_encode(userid)
     try:
-        # print('发出消息:{}'.format(text))
+        # config.init()
+        info = config.get('auto_reply_info')['yigeai_conf']
+        token = info['client_token']
+        if not token:
+            print('一个「AI」token 为空,请求出错')
+            return None
+        session_id = md5_encode(userid if userid else '250')
+
+        # print('发出的消息:{}'.format(text))
         resp = requests.post('http://www.yige.ai/v1/query',
                              data={'token': token, 'query': text, 'session_id': session_id})
         if resp.status_code == 200 and is_json(resp):
@@ -39,9 +43,9 @@ def get_yigeai(text, userid):
             if code and str(code) not in TULING_ERROR_CODE_LIST:
                 return_text = re_data['answer']
                 return return_text
-            else:
-                error_text = re_data['status']['error_type']
-                print('『一个AI』机器人错误信息：{}'.format(error_text))
+            error_text = re_data['status']['error_type']
+            print('『一个AI』机器人错误信息：{}'.format(error_text))
+            return None
         print('『一个AI』机器人获取数据失败')
     except Exception as e:
         print(e)
@@ -51,8 +55,7 @@ def get_yigeai(text, userid):
 get_auto_reply = get_yigeai
 
 if __name__ == '__main__':
-    text = '我爱北京'
-    rt = get_auto_reply(text,'dd--00')
-    print('回复：', rt)
-    # y = get_yaml().get('auto_reply_names')
-    # print(type(y))
+    # text = '我爱北京'
+    # rt = get_auto_reply(text, 'dd--00')
+    # print('回复：', rt)
+    pass
