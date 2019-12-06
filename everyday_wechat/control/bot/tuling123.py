@@ -13,6 +13,10 @@ from everyday_wechat.utils.common import (
 )
 from everyday_wechat.utils import config
 
+__all__ = ['get_auto_reply', 'BOT_INDEX', 'BOT_NAME']
+BOT_INDEX = 1
+BOT_NAME = '图灵机器人'
+
 # 图灵机器人错误码集合
 TULING_ERROR_CODE_LIST = (
     5000, 6000, 4000, 4001, 4002,
